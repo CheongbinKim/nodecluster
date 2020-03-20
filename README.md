@@ -56,6 +56,42 @@ $ sudo yum install nginx
 # selinux port open
 $ sudo semanage port -a -t http_port_t -p tcp 8081
 
+# firewalld settings
+$ sudo firewall-cmd --permanent --zone=public --add-service=http
+$ sudo firewall-cmd --permanent --zone=public --add-service=https
+$ sudo firewall-cmd --reload
 
+# open port list (same 'netstat')
+$ sudo ss -tulpn 
 
+# nginx config
+$ sudo vi /etc/nginx/nginx.conf
+
+- http{} 안에 내용 추가
+
+upstream nodejs_server{
+    server localhost:3001 weight=10 max_fails=3 fail_timeout=10s;
+    server localhost:3002 weight=10 max_fails=3 fail_timeout=10s;
+}
+server{
+    listen          3333;
+    server_name     localhost;
+
+    location / {
+            proxy_pass http://nodejs_server;
+    }
+}
+
+# docker logs
+http://localhost:3333/
+http://localhost:3333/
+http://localhost:3333/
+
+$ docker logs -f server1
+GET / 304 0.548 ms - -
+GET /stylesheets/style.css 304 0.944 ms - -
+
+$ docker logs -f server2
+GET /stylesheets/style.css 304 0.944 ms - -
+GET / 304 0.548 ms - -
 
